@@ -1,7 +1,3 @@
-/*
- * The game screen is a singleton view that consists of
- * a scoreboard and a collection of molehills.
- */
 
 import animate;
 import ui.View;
@@ -12,8 +8,10 @@ import device;
 import ui.widget.SliderView as SliderView;
 import src.soundcontroller as soundcontroller;
 
-var score = 0, interval = 10;
+var score = 0, interval = 8;
 var sound = soundcontroller.getSound();
+var ref;
+var subadd = [];
 
 exports = Class(ui.View, function (supr) {
 	
@@ -28,11 +26,13 @@ exports = Class(ui.View, function (supr) {
 		supr(this, 'init', [opts]);
 
 		this.build();
+		ref = this;
 	};
 
 
 	this.build = function () {
 		this.on('app:start', play_game.bind(this));
+		score=0;
 
 		var bg = new ImageView({
 			superview: this,
@@ -43,6 +43,19 @@ exports = Class(ui.View, function (supr) {
 			height: device.height,
 			z: 0
 		});
+
+		this._exitView = new ui.View({
+			superview: this,
+			x: 0,
+			y: device.height-device.height/10,
+			width: device.width/10,
+			height: device.height/14
+		});	
+		this._exitView.on('InputSelect', function (event, point) {
+			 console.log('End game...');
+			 ref.emit('gamescreen:end');
+		});
+
 		
 		this._sliderView = new SliderView({
 		  superview: this,
@@ -53,18 +66,17 @@ exports = Class(ui.View, function (supr) {
 		  thumbSize: device.width/2,
 		  active: false,
 		  track: {
-		    activeColor: '#FFFFFF' //background color...
-		    //inactiveColor: '#FFFFFF', //background color...
+		    activeColor: '#FFFFFF' 
 		  },
 		  thumb: {
-		    activeColor: '#FFFF00', //background color...
+		    activeColor: '#FFFF00', //bg color...
 		    inactiveColor: '#FFFF00',
 		  }
 		});
 		
 		this._scoreboard = new ui.TextView({
 			superview: this,
-			x: device.width/2,
+			x: device.width/2-device.width/12+(device.width/20)/2, //last arg corresponds to size /2 ... 
 			y: device.height-device.height/10,
 			width: device.width/6,
 			height: device.height/14,
@@ -79,33 +91,32 @@ exports = Class(ui.View, function (supr) {
 	};
 });
 
-/*
- * Game play
- */
-
 function play_game () {
+	score=0;
 	this.antal_loppor=0;
+
 	this.max_antal_loppor=5;
-	this.i = setInterval(tick.bind(this), interval);
 	this.sliderValue = device.width/3;
 	this.sliderValueStart = this.sliderValue;
+	this.i = setInterval(tick.bind(this), interval);
 }
 
 function tick () {
     	
-	if (Math.floor(Math.random()*1000) > 989 && this.antal_loppor <= this.max_antal_loppor) {
+	if (Math.floor(Math.random()*1000) > 980 && this.antal_loppor < this.max_antal_loppor) {
 		this.antal_loppor++;
 		scale_of_loppa = Math.random() + 0.75;
 		loppa = new Loppan({scale: scale_of_loppa});
 		loppa._loppan.style.x = Math.floor(Math.random()*(device.width-device.width/5) + device.width/11);
 		loppa._loppan.style.y = device.height-device.height/8;
 		//console.log('loppa x put on: ' + loppa._loppan.style.x + ' y: ' + loppa._loppan.style.y);		
-	
-		this.addSubview(loppa._loppan);
+		
+		this.addSubview(loppa._loppan); //TODO: Använd view pool istället...
+
 		loppa._loppan.once('loppan:hit', bind(this, function(touched_loppa) {
 			score++;
-			if (this.sliderValue < this.sliderValueStart -10) {
-				this.sliderValue = this.sliderValue+10;
+			if (this.sliderValue < this.sliderValueStart -15) {
+				this.sliderValue = this.sliderValue+15;
 			}
 			sound.play('whack');
 			updateStatus(this,touched_loppa);
@@ -128,13 +139,12 @@ function tick () {
 	this.sliderValue = this.sliderValue-0.1;
 	this._sliderView.setThumbSize(this.sliderValue);
 	
-	/*if (this.sliderValue<350) {
-		this._sliderView.updateOpts({thumb: {
-		    activeColor: '#FF0000', //background color...
-		    inactiveColor: '#FF0000'
-		  }});
-		
-	}*/
+	//game over... 
+	if (this.sliderValue<=0) {
+		this.emit('gamescreen:end');	
+	}
+
+
 	   	
 }
 

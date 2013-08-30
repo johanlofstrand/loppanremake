@@ -11,7 +11,7 @@ import device;
 exports = Class(ui.View, function (supr) {
 	var loppan_width = device.width/13;//40;
 	var loppan_height = device.height/13; //22;
-	var speed = 10;
+	var speed = 7;
 	var _loppan;
 	var _frame;
 	var _direction;
@@ -46,7 +46,7 @@ exports = Class(ui.View, function (supr) {
 			anchorX: loppan_width/2, //to set rotation point correct.
 			anchorY: loppan_height/2,
 			url: 'resources/images/loppan',
-			frameRate: 10, //how fast to switch between the sprites...
+			frameRate: 7, //how fast to switch between the sprites...
 			autoStart: true,
 
 		});
